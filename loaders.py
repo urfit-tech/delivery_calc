@@ -11,15 +11,17 @@ pg_conn = psycopg2.connect(**st.secrets["postgres"])
 def load_managers(app_id: str):
     df = pd.read_sql(
         """
-        SELECT member_id, member.name, email
+        SELECT member_id, member.name, email, value AS "no"
         FROM member
         JOIN member_property ON member.id = member_property.member_id AND member.app_id = %s
         JOIN property ON member_property.property_id = property.id AND property.name = '分機號碼'
+        order by value
         """,
         pg_conn,
         params=(app_id,),
         index_col="member_id",
     )
+    df = df[df["no"] != ""]
     return df
 
 

@@ -8,8 +8,6 @@ import pandas as pd
 from loaders import load_managers, load_categories, load_leads
 
 
-
-
 def login_page():
     """
     Login page
@@ -23,20 +21,20 @@ def login_page():
     if password:
         if password == st.secrets["password"]:
             st.session_state["authenticated"] = True
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("The password you entered is incorrect.")
 
 
 def main_page():
+    st.title("Lead score calculator")
     col1, col2 = st.columns([4, 8])
     app_id = col1.selectbox("選擇 APP", ["xuemi", "sixdigital"])
     start_date, end_date = col2.date_input(
         "選擇日期範圍",
         [
-            datetime.date(2023, 1, 1),
-            datetime.date(2023, 1, 31),
-            # datetime.datetime.now(), datetime.datetime.now()
+            datetime.datetime.today() - datetime.timedelta(weeks=1),
+            datetime.datetime.today(),
         ],
     )
     if start_date is None or end_date is None:
@@ -158,9 +156,10 @@ def main_page():
                 result_df.loc[manager_conf_df.index[i], f[j]] += 1
 
     st.divider()
+    satisfaction = pulp.value(prob.objective)
     col1, col2, col3 = st.columns(3)
     col1.metric("狀態", pulp.LpStatus[prob.status])
-    col2.metric("最大滿意度", np.round(pulp.value(prob.objective), 2))
+    col2.metric("最大滿意度", np.round(pulp.value(prob.objective), 2) if satisfaction else 0)
     col3.metric("派發數量", total)
 
     # reset index, column name
